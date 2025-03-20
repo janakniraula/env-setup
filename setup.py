@@ -36,7 +36,7 @@ if os.geteuid() != 0:
     sys.exit(1)
 
 # User confirmation
-print("Starting DevOps environment setup for Jenkins (in Docker), Docker, and GitHub CLI...")
+print("Starting DevOps environment setup for Jenkins (in Docker), Docker, GitHub CLI, and Grafana...")
 print("⚠️ This script will modify your system. Ensure you have an Ubuntu server ready.")
 input("Press Enter to continue or Ctrl+C to abort...")
 
@@ -111,14 +111,26 @@ run_command(
     "Fetching Jenkins initial admin password"
 )
 
+# Install Grafana
+run_command("apt-get install -y apt-transport-https software-properties-common", "Installing Grafana prerequisites")
+run_command("wget -q -O - https://packages.grafana.com/gpg.key | apt-key add -", "Adding Grafana GPG key")
+run_command("echo 'deb https://packages.grafana.com/oss/deb stable main' | tee /etc/apt/sources.list.d/grafana.list", "Adding Grafana repository")
+run_command("apt-get update", "Updating package list with Grafana repo")
+run_command("apt-get install -y grafana", "Installing Grafana")
+run_command("systemctl start grafana-server", "Starting Grafana service")
+run_command("systemctl enable grafana-server", "Enabling Grafana to start on boot")
+run_command("systemctl status grafana-server --no-pager | head -n 3", "Checking Grafana status")
+
 # Final instructions
 print("\n✅ Setup completed successfully!")
 print("⚠️ Jenkins is running at http://<your_server_ip>:8080")
 print("⚠️ Use the password displayed above to unlock Jenkins.")
+print("⚠️ Grafana is running at http://<your_server_ip>:3000")
+print("  - Default login: username 'admin', password 'admin' (change it on first login)")
 print("ℹ️ To enable docker-compose in Jenkins, manually install it inside the container:")
 print("  1. docker exec -it jenkins-docker bash")
 print("  2. curl -SL https://github.com/docker/compose/releases/download/v2.29.7/docker-compose-linux-x86_64 -o /usr/local/bin/docker-compose")
 print("  3. chmod +x /usr/local/bin/docker-compose")
 print("  4. exit")
 print("ℹ️ If Docker commands fail, log out and back in, or reboot the server with 'sudo reboot'.")
-print("ℹ️ Next steps: Configure Jenkins, set up your Django pipeline, and deploy!")
+print("ℹ️ Next steps: Configure Jenkins and Grafana, set up your pipeline, and deploy!")
